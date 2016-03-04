@@ -1,0 +1,91 @@
+/**
+ * Copyright (c) 1996-2004 Borland Software Corp. All Rights Reserved.
+ *
+ * This SOURCE CODE FILE, which has been provided by Borland as part
+ * of a Borland product for use ONLY by licensed users of the product,
+ * includes CONFIDENTIAL and PROPRIETARY information of Borland.
+ *
+ * USE OF THIS SOFTWARE IS GOVERNED BY THE TERMS AND CONDITIONS
+ * OF THE LICENSE STATEMENT AND LIMITED WARRANTY FURNISHED WITH
+ * THE PRODUCT.
+ *
+ * IN PARTICULAR, YOU WILL INDEMNIFY AND HOLD BORLAND, ITS RELATED
+ * COMPANIES AND ITS SUPPLIERS, HARMLESS FROM AND AGAINST ANY
+ * CLAIMS OR LIABILITIES ARISING OUT OF THE USE, REPRODUCTION, OR
+ * DISTRIBUTION OF YOUR PROGRAMS, INCLUDING ANY CLAIMS OR LIABILITIES
+ * ARISING OUT OF OR RESULTING FROM THE USE, MODIFICATION, OR
+ * DISTRIBUTION OF PROGRAMS OR FILES CREATED FROM, BASED ON, AND/OR
+ * DERIVED FROM THIS SOURCE CODE FILE.
+ */
+//--------------------------------------------------------------------------------------------------
+// Copyright (c) 1996 - 2004 Borland Software Corporation. All Rights Reserved.
+//--------------------------------------------------------------------------------------------------
+package com.borland.jbcl.model;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Hashtable;
+
+import com.borland.jb.util.Diagnostic;
+
+public class GraphSelectionEvent extends SelectionEvent implements Serializable
+{
+  private static final long serialVersionUID = 200L;
+
+  public GraphSelectionEvent(GraphSelection selection, int change) {
+    super(selection, change);
+    this.selection = selection;
+  }
+
+  public GraphSelectionEvent(GraphSelection selection, int change, GraphLocation location) {
+    this(selection, change);
+    this.location = location;
+  }
+
+  public GraphSelection getSelection() { return selection; }
+  public GraphLocation  getLocation()  { return location; }
+
+  public void dispatch(java.util.EventListener listener) {
+    switch (getID()) {
+      case ITEM_CHANGE:      ((GraphSelectionListener)listener).selectionItemChanged(this);  break;
+      case SELECTION_CHANGE: ((GraphSelectionListener)listener).selectionChanged(this);      break;
+      default:
+        Diagnostic.fail();
+        break;
+    }
+  }
+
+  protected String paramString() {
+    return super.paramString() +
+           ",selection=" + selection +   
+           ",location=" + location;  
+  }
+
+  // Serialization support
+
+  private void writeObject(ObjectOutputStream s) throws IOException {
+    s.defaultWriteObject();
+    Hashtable hash = new Hashtable(2);
+    if (selection instanceof Serializable)
+      hash.put("s", selection); 
+    if (location instanceof Serializable)
+      hash.put("l", location); 
+    s.writeObject(hash);
+  }
+
+  private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+    s.defaultReadObject();
+    Hashtable hash = (Hashtable)s.readObject();
+    Object data = hash.get("s"); 
+    if (data instanceof GraphSelection)
+      selection = (GraphSelection)data;
+    data = hash.get("l"); 
+    if (data instanceof GraphLocation)
+      location = (GraphLocation)data;
+  }
+
+  private transient GraphSelection selection;
+  private transient GraphLocation  location;
+}
